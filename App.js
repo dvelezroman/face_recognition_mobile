@@ -30,15 +30,16 @@ class App extends React.Component {
 	}
 
 	render() {
+		console.log(this.state);
 		return (
 			<View style={styles.container}>
 				<TextInput
 					style={styles.input}
 					placeholder="Type your Name"
-					value={this.state.name}
 					onChangeText={name => this.setState({ name })}
 				/>
-				{this.state.hasCameraPermission && !this.state.working ? (
+
+				{this.state.hasCameraPermission ? (
 					<Camera
 						style={styles.camera}
 						type={this.state.type}
@@ -54,7 +55,7 @@ class App extends React.Component {
 						}}
 					/>
 				) : (
-					<ActivityIndicator size="large" color="#0000ff" />
+					<Text>Loading the camera...</Text>
 				)}
 				<View style={styles.buttons}>
 					<TouchableOpacity
