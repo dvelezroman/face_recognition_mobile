@@ -1,7 +1,6 @@
-import React from "react";
 import * as Camera from "expo-camera";
 import axios from "axios";
-import { BASE_URL, headers, ENDPOINTS } from "./config";
+import { BASE_URL, ENDPOINTS, APP_KEY, APP_ID } from "./config";
 import uuid from "uuid/v4";
 
 export class AppLogic {
@@ -9,8 +8,14 @@ export class AppLogic {
 		this.setState = Container.setState.bind(Container);
 		Container.state = {
 			hasCameraPermission: null,
+			name: "unknow",
 			faces: [],
+			recognizing: false,
 			faceDetected: false,
+			recognizeResponse: {
+				status: false,
+				name: "unknow"
+			},
 			type: Camera.Constants.Type.front
 		};
 		this.camera = Container.camera;
@@ -18,6 +23,7 @@ export class AppLogic {
 		this.props = Container.props;
 		this.snap = this.snap.bind(Container);
 		this.handleFacesDetected = this.handleFacesDetected.bind(Container);
+		this.resolvePersonName = this.resolvePersonName.bind(Container);
 		this.recognize = this.recognize.bind(Container);
 		this.enroll = this.enroll.bind(Container);
 	}
@@ -28,9 +34,24 @@ export class AppLogic {
 		}
 	}
 
+	resolvePersonName(candidates) {
+		const response = {
+			status: true,
+			name: "unknow"
+		};
+		candidates.forEach(candidate => {
+			if (candidate.subject_id === this.state.name) {
+				response.status = true;
+				response.name = this.state.name;
+			}
+		});
+		return response;
+	}
+
 	async snap(recognize) {
 		try {
-			if (this.camera) {
+			if (this.state.name != "unknow" && this.camera) {
+				this.setState({ recognizing: true });
 				const photo = await this.camera.takePictureAsync({
 					quality: 0.1,
 					base64: true
@@ -39,13 +60,17 @@ export class AppLogic {
 					alert("No face detected");
 					return;
 				}
-				const userId = uuid();
-
 				const { base64 } = photo;
 				const response = recognize
-					? await this.logic.enroll({ userId, base64 })
-					: await this.logic.recognize({ userId, base64 });
-				console.log(response);
+					? await this.logic.enroll({ name: this.state.name, base64 })
+					: await this.logic.recognize({ base64 });
+				if (recognize) return "Enrolled";
+				else {
+					const recognizeResponse = this.logic.resolvePersonName(
+						response.images[0].candidates
+					);
+					this.setState({ recognizeResponse, recognizing: false });
+				}
 			}
 		} catch (error) {
 			console.error(error);
@@ -53,24 +78,19 @@ export class AppLogic {
 	}
 
 	// Enroll Method
-	async enroll({ userId, base64 }) {
-		console.log({
-			gallery_name: "MyGallery",
-			image: JSON.stringify(base64),
-			subject_id: userId
-		});
+	async enroll({ name, base64 }) {
 		try {
 			const response = await axios.post(
-				`https://api.kairos.com/enroll`,
+				`https://api.kairos.com/verify`,
 				{
 					gallery_name: "MyGallery",
 					image: base64,
-					subject_id: userId
+					subject_id: name
 				},
 				{
 					headers: {
-						app_id: "1f10f57e",
-						app_key: "59785188afbcd0b34a49d10ba4175949"
+						app_id: APP_ID,
+						app_key: APP_KEY
 					}
 				}
 			);
@@ -81,15 +101,24 @@ export class AppLogic {
 	}
 
 	// Recognize Method
-	async recognize(base64) {
-		const rawResponse = await fetch(`${BASE_URL + ENDPOINTS.recognize}`, {
-			method: "POST",
-			headers,
-			body: JSON.stringify({
-				image: base64,
-				gallery_name: "MyGallery"
-			})
-		});
-		return rawResponse;
+	async recognize({ base64 }) {
+		try {
+			const response = await axios.post(
+				`https://api.kairos.com/recognize`,
+				{
+					gallery_name: "MyGallery",
+					image: base64
+				},
+				{
+					headers: {
+						app_id: APP_KEY,
+						app_key: APP_ID
+					}
+				}
+			);
+			return response.data;
+		} catch (error) {
+			return error;
+		}
 	}
 }
