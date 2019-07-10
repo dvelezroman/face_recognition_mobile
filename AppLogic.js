@@ -8,6 +8,7 @@ export class AppLogic {
 		this.setState = Container.setState.bind(Container);
 		Container.state = {
 			hasCameraPermission: null,
+			working: false,
 			name: "unknow",
 			faces: [],
 			recognizing: false,
@@ -41,8 +42,7 @@ export class AppLogic {
 		};
 		candidates.forEach(candidate => {
 			if (candidate.subject_id === this.state.name) {
-				response.status = true;
-				response.name = this.state.name;
+				response.name = candidate.subject_id;
 			}
 		});
 		return response;
@@ -50,6 +50,7 @@ export class AppLogic {
 
 	async snap(recognize) {
 		try {
+			this.setState({ working: true });
 			if (this.state.name != "unknow" && this.camera) {
 				this.setState({ recognizing: true });
 				const photo = await this.camera.takePictureAsync({
@@ -71,6 +72,7 @@ export class AppLogic {
 					);
 					this.setState({ recognizeResponse, recognizing: false });
 				}
+				this.setState({ working: false });
 			}
 		} catch (error) {
 			console.error(error);

@@ -1,13 +1,13 @@
 import React from "react";
 import {
+	ActivityIndicator,
 	StyleSheet,
 	Text,
 	View,
 	TouchableOpacity,
 	TouchableHighlight,
 	TextInput,
-	Modal,
-	Button
+	Modal
 } from "react-native";
 import { Camera } from "expo";
 import * as Permissions from "expo-permissions";
@@ -24,7 +24,9 @@ class App extends React.Component {
 
 	async componentDidMount() {
 		const { status } = await Permissions.askAsync(Permissions.CAMERA);
-		this.setState({ hasCameraPermission: status === "granted" });
+		this.setState({
+			hasCameraPermission: status === "granted"
+		});
 	}
 
 	render() {
@@ -36,7 +38,7 @@ class App extends React.Component {
 					value={this.state.name}
 					onChangeText={name => this.setState({ name })}
 				/>
-				{this.state.hasCameraPermission ? (
+				{this.state.hasCameraPermission && !this.state.working ? (
 					<Camera
 						style={styles.camera}
 						type={this.state.type}
@@ -52,7 +54,7 @@ class App extends React.Component {
 						}}
 					/>
 				) : (
-					<Text>You must allow permissions for the camera</Text>
+					<ActivityIndicator size="large" color="#0000ff" />
 				)}
 				<View style={styles.buttons}>
 					<TouchableOpacity
@@ -79,7 +81,7 @@ class App extends React.Component {
 					<View style={{ marginTop: 22 }}>
 						<View>
 							<Text style={{ paddingBottom: 20, fontSize: 25 }}>
-								{this.state.recognizeResponse.status
+								{this.state.recognizeResponse.name != "unknow"
 									? `You are ${this.state.recognizeResponse.name}`
 									: `You are not ${this.state.name}`}
 							</Text>
