@@ -111,11 +111,12 @@ export class AppLogic {
 				},
 				{
 					headers: {
-						app_id: APP_KEY,
-						app_key: APP_ID
+						app_id: APP_ID,
+						app_key: APP_KEY
 					}
 				}
 			);
+
 			return response.data;
 		} catch (error) {
 			return error;

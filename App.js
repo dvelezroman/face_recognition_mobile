@@ -33,6 +33,7 @@ class App extends React.Component {
 				<TextInput
 					style={styles.input}
 					placeholder="Type your Name"
+					value={this.state.name}
 					onChangeText={name => this.setState({ name })}
 				/>
 				{this.state.hasCameraPermission ? (
@@ -76,10 +77,12 @@ class App extends React.Component {
 					}}
 				>
 					<View style={{ marginTop: 22 }}>
-						<View style={styles.modal}>
-							<Text style={{ paddingBottom: 20, fontSize: 25 }}>{`You are ${
-								this.state.recognizeResponse.name
-							}`}</Text>
+						<View>
+							<Text style={{ paddingBottom: 20, fontSize: 25 }}>
+								{this.state.recognizeResponse.status
+									? `You are ${this.state.recognizeResponse.name}`
+									: `You are not ${this.state.name}`}
+							</Text>
 
 							<TouchableHighlight
 								onPress={() => {
@@ -89,7 +92,7 @@ class App extends React.Component {
 									this.setState({ recognizeResponse });
 								}}
 							>
-								<Button title="okay">Okay</Button>
+								<Text>Okay</Text>
 							</TouchableHighlight>
 						</View>
 					</View>
